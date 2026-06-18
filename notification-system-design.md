@@ -496,3 +496,133 @@ Use separate databases for read traffic.
 * Infrastructure cost
 
 ---
+
+
+
+# Stage 5 - Reliable Notification Delivery
+
+## Existing Implementation
+
+```python
+for student in students:
+    send_email()
+    save_to_db()
+    push_to_app()
+```
+
+---
+
+## Problems
+
+1. Sequential execution
+2. Very slow
+3. Single failure interrupts flow
+4. No retries
+5. Poor scalability
+
+---
+
+## Better Architecture
+
+### Message Queue
+
+Technology:
+
+* RabbitMQ
+* Kafka
+
+---
+
+## Architecture
+
+```text
+HR
+ |
+API
+ |
+Queue
+ |
+ +-------------------+
+ |                   |
+Email Worker         |
+DB Worker            |
+Push Worker          |
+```
+
+---
+
+## Benefits
+
+* Asynchronous processing
+* Retry support
+* Fault tolerance
+* Horizontal scaling
+
+---
+
+## What If Email Fails For 200 Students?
+
+Do not stop processing.
+
+Instead:
+
+1. Store failed jobs.
+2. Retry automatically.
+3. Move repeated failures to Dead Letter Queue.
+
+---
+
+## Should DB Save and Email Happen Together?
+
+No.
+
+Reason:
+
+Database write and email delivery are different concerns.
+
+Notification must first be saved reliably.
+
+After that, workers can process email and push delivery independently.
+
+---
+
+## Revised Pseudocode
+
+```python
+function notify_all(student_ids, message):
+
+    notification_id = save_notification(message)
+
+    for student_id in student_ids:
+
+        queue.publish({
+            "notificationId": notification_id,
+            "studentId": student_id
+        })
+
+
+
+EmailWorker():
+
+    while true:
+        job = queue.consume()
+
+        try:
+            send_email(job.studentId)
+        except:
+            retry(job)
+
+
+
+PushWorker():
+
+    while true:
+        job = queue.consume()
+
+        try:
+            push_notification(job.studentId)
+        except:
+            retry(job)
+```
+
+---
