@@ -626,3 +626,98 @@ PushWorker():
 ```
 
 ---
+
+
+
+# Stage 6 - Priority Inbox Design
+
+## Requirement
+
+Display top N most important unread notifications.
+
+Priority depends on:
+
+1. Notification Type
+2. Recency
+
+---
+
+## Priority Weights
+
+| Type      | Weight |
+| --------- | ------ |
+| Placement | 3      |
+| Result    | 2      |
+| Event     | 1      |
+
+---
+
+## Priority Formula
+
+```text
+priorityScore =
+(typeWeight × 1000000000)
++
+timestamp
+```
+
+This guarantees:
+
+```text
+Placement > Result > Event
+```
+
+while still preferring newer notifications.
+
+---
+
+## Example Algorithm
+
+```javascript
+const WEIGHTS = {
+  Placement: 3,
+  Result: 2,
+  Event: 1
+};
+
+function calculateScore(notification) {
+  return (
+    WEIGHTS[notification.Type] * 1000000000 +
+    new Date(notification.Timestamp).getTime()
+  );
+}
+```
+
+---
+
+## Efficient Top-10 Strategy
+
+Instead of sorting all notifications:
+
+Use a Min Heap of size 10.
+
+Complexity:
+
+```text
+O(N log 10)
+≈ O(N)
+```
+
+Much faster than:
+
+```text
+O(N log N)
+```
+
+---
+
+## Final Recommendation
+
+* PostgreSQL for storage
+* Redis for caching
+* WebSockets for real-time delivery
+* RabbitMQ/Kafka for large-scale distribution
+* Composite indexes for unread notification queries
+* Min Heap for efficient Priority Inbox ranking
+* Background workers for email and push notification delivery
+
