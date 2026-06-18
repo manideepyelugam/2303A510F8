@@ -174,3 +174,124 @@ Benefits:
 * Lower database load
 
 ---
+
+
+# Stage 2 - Database Design
+
+## Recommended Database
+
+PostgreSQL
+
+### Why PostgreSQL?
+
+* ACID compliance
+* Reliable transactions
+* Efficient indexing
+* Handles millions of records
+* Excellent query performance
+
+---
+
+## Database Schema
+
+### notifications
+
+```sql
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    notification_type VARCHAR(20) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## Indexes
+
+```sql
+CREATE INDEX idx_student_read
+ON notifications(student_id, is_read);
+
+CREATE INDEX idx_created_at
+ON notifications(created_at DESC);
+
+CREATE INDEX idx_type
+ON notifications(notification_type);
+```
+
+---
+
+## Scalability Challenges
+
+As data volume increases:
+
+* Slow searches
+* Expensive sorting
+* High storage requirements
+* Increased response times
+
+---
+
+## Solutions
+
+### Database Indexing
+
+Improve filtering and sorting performance.
+
+### Partitioning
+
+Partition notifications by month.
+
+Example:
+
+```text
+notifications_2026_01
+notifications_2026_02
+notifications_2026_03
+```
+
+### Archiving
+
+Move old notifications to cold storage.
+
+### Caching
+
+Store frequently accessed data in Redis.
+
+---
+
+## Example Queries
+
+### Fetch Unread Notifications
+
+```sql
+SELECT id,
+       notification_type,
+       message,
+       created_at
+FROM notifications
+WHERE student_id = 1042
+AND is_read = FALSE
+ORDER BY created_at DESC
+LIMIT 50;
+```
+
+### Mark Notification Read
+
+```sql
+UPDATE notifications
+SET is_read = TRUE
+WHERE id = 'notification-id';
+```
+
+### Delete Notification
+
+```sql
+DELETE FROM notifications
+WHERE id = 'notification-id';
+```
+
+---
