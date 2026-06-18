@@ -408,3 +408,91 @@ AND createdAt >= NOW() - INTERVAL '7 days';
 ```
 
 ---
+
+
+
+# Stage 4 - Performance Improvements
+
+## Current Problem
+
+Notifications are fetched on every page load.
+
+This causes:
+
+* High database traffic
+* Increased latency
+* Poor user experience
+
+---
+
+## Solution 1 - Redis Cache
+
+### Flow
+
+```text
+Request
+   |
+Redis Cache
+   |
+Hit -> Return Data
+
+Miss -> Database -> Cache -> Response
+```
+
+### Pros
+
+* Extremely fast
+* Reduced DB load
+
+### Cons
+
+* Additional infrastructure
+* Cache invalidation complexity
+
+---
+
+## Solution 2 - Pagination
+
+```http
+GET /notifications?page=1&limit=20
+```
+
+### Pros
+
+* Smaller responses
+* Faster queries
+
+### Cons
+
+* Multiple requests required
+
+---
+
+## Solution 3 - WebSockets
+
+Push notifications only when needed.
+
+### Pros
+
+* Real-time updates
+* Reduced polling
+
+### Cons
+
+* More complex implementation
+
+---
+
+## Solution 4 - Read Replicas
+
+Use separate databases for read traffic.
+
+### Pros
+
+* Scales horizontally
+
+### Cons
+
+* Infrastructure cost
+
+---
