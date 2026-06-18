@@ -295,3 +295,116 @@ WHERE id = 'notification-id';
 ```
 
 ---
+
+
+
+# Stage 3 - Query Optimization
+
+## Existing Query
+
+```sql
+SELECT *
+FROM notifications
+WHERE studentID = 1042
+AND isRead = false
+ORDER BY createdAt DESC;
+```
+
+---
+
+## Is It Correct?
+
+Yes.
+
+However, it is inefficient at scale.
+
+---
+
+## Why Is It Slow?
+
+### Large Dataset
+
+Database contains:
+
+* 50,000 students
+* 5,000,000 notifications
+
+### Problems
+
+1. SELECT * fetches unnecessary columns.
+2. Missing composite index.
+3. Sorting millions of rows.
+4. Full table scans.
+
+---
+
+## Better Index
+
+```sql
+CREATE INDEX idx_student_read_created
+ON notifications(studentID, isRead, createdAt DESC);
+```
+
+---
+
+## Optimized Query
+
+```sql
+SELECT id,
+       notificationType,
+       message,
+       createdAt
+FROM notifications
+WHERE studentID = 1042
+AND isRead = false
+ORDER BY createdAt DESC
+LIMIT 50;
+```
+
+---
+
+## Computational Cost
+
+### Without Index
+
+```text
+O(N)
+```
+
+Full table scan.
+
+### With Index
+
+```text
+O(log N)
+```
+
+Index lookup.
+
+---
+
+## Should We Index Every Column?
+
+No.
+
+Reasons:
+
+* Increased storage usage
+* Slower INSERTs
+* Slower UPDATEs
+* Higher maintenance cost
+
+Indexes should be created only for frequently queried columns.
+
+---
+
+## Placement Notifications in Last 7 Days
+
+```sql
+SELECT DISTINCT studentID
+FROM notifications
+WHERE notificationType = 'Placement'
+AND createdAt >= NOW() - INTERVAL '7 days';
+```
+
+---
